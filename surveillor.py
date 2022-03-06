@@ -14,6 +14,10 @@ import ffmpy
 import requests
 
 
+RAW_DATA_DIR_NAME = 'data_dump'
+VID_DIR_NAME ='vids_preprocessed'
+
+
 def logit(message: str):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -32,17 +36,16 @@ def m3u8_link_recorder(m3u8_link: str, model_username: str, sleep_time: int):
     method to be executed once per m3u8 link in parallel.
     """
 
-    vids_preprocessed_dir = "vids_preprocessed"
-    model_path = os.path.join(vids_preprocessed_dir, model_username)
+    model_path = os.path.join(VID_DIR_NAME, model_username)
     vid_name = f"{datetime_tag()}.mkv"
-    vid_path = os.path.join(vids_preprocessed_dir, model_username, vid_name)
+    vid_path = os.path.join(VID_DIR_NAME, model_username, vid_name)
     ff = ffmpy.FFmpeg(
         inputs={m3u8_link: None},
         outputs={vid_path: "-c copy"}
     )
 
-    if not os.path.isdir(vids_preprocessed_dir):
-        os.mkdir(vids_preprocessed_dir)
+    if not os.path.isdir(VID_DIR_NAME):
+        os.mkdir(VID_DIR_NAME)
     if not os.path.isdir(model_path):
         os.mkdir(model_path)
 
@@ -88,12 +91,11 @@ def model_list_saver(model_list):
     """called to save API-data to create a cool dataset.
     """
 
-    data_dump_dir = "data_dump"
     json_file_name = f"{datetime_tag()}.json"
-    json_file_path = os.path.join(data_dump_dir, json_file_name)
+    json_file_path = os.path.join(RAW_DATA_DIR_NAME, json_file_name)
 
-    if not os.path.isdir(data_dump_dir):
-        os.mkdir(data_dump_dir)
+    if not os.path.isdir(RAW_DATA_DIR_NAME):
+        os.mkdir(RAW_DATA_DIR_NAME)
     with open(json_file_path, "w") as fp:
         json.dump(model_list, fp)
 
@@ -152,13 +154,12 @@ def video_stitcher():
     -directory which is instatiated by m3u8_link_recorder
     """
 
-    vids_preprocessed_dir = "vids_preprocessed"
-    subdirs = os.listdir(vids_preprocessed_dir)
+    subdirs = os.listdir(VID_DIR_NAME)
 
     logit(f"video_stitcher started")
 
     for subdir in subdirs:
-        dir_and_subdir = os.path.join(vids_preprocessed_dir, subdir)
+        dir_and_subdir = os.path.join(VID_DIR_NAME, subdir)
         if len(os.listdir(dir_and_subdir)) > 1:
             vids = os.listdir(dir_and_subdir)
             list_txt_dir = os.path.join(dir_and_subdir, "my_list.txt")

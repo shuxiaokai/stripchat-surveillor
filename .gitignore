@@ -9,3 +9,5 @@ env
 strategy.txt
 data_dump
 surveil.log
+data_dump_archive
+analytics.db
