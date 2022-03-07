@@ -108,8 +108,8 @@ def stream_download_decider(all_model_names_480_option: tuple):
     models_followed_online = []
     if len(sys.argv) == 1:
         with open("models_followed.txt", "r") as f:
-            for line in f.readlines():
-                model_followed = set(line.replace("\n", ""))
+            for line in set([x for x in f.readlines()]):
+                model_followed = line.replace("\n", "")
                 for id_online, uname_online, option_480p_online in all_model_names_480_option:
                     if model_followed == uname_online.lower():
                         models_followed_online.append(
