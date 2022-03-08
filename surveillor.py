@@ -9,6 +9,7 @@ from datetime import datetime
 from time import sleep
 import logging
 import multiprocessing
+import random
 
 import ffmpy
 import requests
@@ -66,7 +67,7 @@ def model_list_grabber():
     tuple index: id, uname, 480p option
     """
 
-    url = "https://xhamsterlive.com/api/front/v2/models?topLimit=10000"
+    url = f"https://xhamsterlive.com/api/front/v2/models?topLimit={random.randint(5000, 10000)}"
     r = requests.get(url, stream=True)
     req = json.loads(r.content)
     models = req.get("blocks")[5].get("models")
