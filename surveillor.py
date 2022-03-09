@@ -16,7 +16,8 @@ import requests
 
 
 RAW_DATA_DIR_NAME = 'data_dump'
-VID_DIR_NAME ='vids_preprocessed'
+VID_DIR_NAME = 'vids_preprocessed'
+VID_PROC_DIR_NAME = 'vids_processed'
 
 
 def logit(message: str):
@@ -186,6 +187,41 @@ def video_stitcher():
                 os.remove(vid_dir)
             os.remove(list_txt_dir)
             logit(f"video_stitcher concatenated {subdir}")
+
+def process_vids():
+
+    video_stitcher()
+
+    if not os.path.exists(VID_PROC_DIR_NAME):
+        os.mkdir(VID_PROC_DIR_NAME)
+
+    models = os.listdir(VID_DIR_NAME)
+    for model in models:
+        fp = os.path.join(VID_DIR_NAME, model)
+        file = os.listdir(fp)
+        if len(file) > 1:
+            pass
+        full_fp = os.path.join(fp, file[0])
+        new_file_name = f'{model}_{datetime_tag()}.mp4'
+        new_fp = os.path.join(VID_PROC_DIR_NAME, new_file_name)
+        print(f'processing {model}')
+
+        ff = ffmpy.FFmpeg(
+            inputs={full_fp: None},
+            outputs={new_fp: "-c:v libx264 -preset fast"}
+        )
+
+        ff.run()
+        os.remove(full_fp)
+        dir_clean_up()
+
+def dir_clean_up():
+    models = os.listdir(VID_DIR_NAME)
+    for model in models:
+        sub_dir = os.path.join(VID_DIR_NAME, model)
+        files = os.listdir(sub_dir)
+        if not files:
+            os.rmdir(sub_dir)
 
 
 def main():
