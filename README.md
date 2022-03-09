@@ -21,6 +21,7 @@ python3 surveillor.py <model usernames in lower-case, separated by space>
 * As default, the streaming-quality is set to 480p/16:9 and if not, whatever the default streaming-resolution and aspect-ratio happens to be set by the streamer (in this case, usually higher resolution and odd aspect ratios)
 * As default, the number of concurrently streamed shows is equal the available number of threads. This assures that the script doesn't produce 'runaway' ffmpeg-processes
 * For OpSec, while executing surveillor.py it is recommended to use a VPN-connection to a server operated by a privacy-focused VPN-service. Otherwise, there is the risk that the host triangulates you due to the unusually large response being requested to the API.
+* If you want to initiate concatenation of all videos manually, in Linux, execute `python3 -c 'import surveillor; surveillor.video_stitcher()'` from the command line.
 
 ## Analytics
 
