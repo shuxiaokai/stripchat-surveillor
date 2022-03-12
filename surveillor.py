@@ -19,16 +19,6 @@ RAW_DATA_DIR_NAME = 'data_dump'
 VID_DIR_NAME = 'vids_preprocessed'
 VID_PROC_DIR_NAME = 'vids_processed'
 
-
-def logit(message: str):
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    handler = logging.FileHandler("surveil.log")
-    handler.setLevel(logging.INFO)
-    logger.addHandler(handler)
-    logger.info(f"{datetime_tag()}: {message}")
-
-
 def datetime_tag():
     return datetime.now().strftime("%y%m%d_%H%M%S")
 
@@ -51,7 +41,6 @@ def m3u8_link_recorder(m3u8_link: str, model_username: str, sleep_time: int):
     if not os.path.isdir(model_path):
         os.mkdir(model_path)
 
-    logit(f"{model_username} is being recorded")
 
     thread_1 = threading.Thread(target=ff.run)
     thread_1.start()
@@ -59,8 +48,6 @@ def m3u8_link_recorder(m3u8_link: str, model_username: str, sleep_time: int):
         sleep(sleep_time)
     ff.process.terminate()
     thread_1.join()
-
-    logit(f"{model_username} recording stopped")
 
 
 def model_list_grabber():
@@ -147,50 +134,75 @@ def concurrent_stream_recording(models_online_followed: tuple, sleep_time: int, 
             m3u8_link = f"https://b-hls-01.strpst.com/hls/{id}/{id}.m3u8"
             m3u8_links.append(m3u8_link)
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.map(m3u8_link_recorder,
-                     m3u8_links[:models_to_record], usernames[:models_to_record], [sleep_time] * models_to_record)
+        executor.map(m3u8_link_recorder, m3u8_links[:models_to_record], usernames[:models_to_record], [sleep_time] * models_to_record)
 
 
-def video_stitcher():
+def video_stitcher(dir_):
     """invoke method for stitching together videos in each subdirectory of "vids_preprocessed"
     -directory which is instatiated by m3u8_link_recorder
     """
 
-    subdirs = os.listdir(VID_DIR_NAME)
+    if dir_ == VID_DIR_NAME:
+        subdirs = os.listdir(VID_DIR_NAME)
 
-    logit(f"video_stitcher started")
 
-    for subdir in subdirs:
-        dir_and_subdir = os.path.join(VID_DIR_NAME, subdir)
-        if len(os.listdir(dir_and_subdir)) > 1:
-            vids = os.listdir(dir_and_subdir)
-            list_txt_dir = os.path.join(dir_and_subdir, "my_list.txt")
-            output_dir = os.path.join(
-                dir_and_subdir, f"concat_{datetime_tag()}.mkv")
+        for subdir in subdirs:
+            dir_and_subdir = os.path.join(VID_DIR_NAME, subdir)
+            if len(os.listdir(dir_and_subdir)) > 1:
+                vids = os.listdir(dir_and_subdir)
+                list_txt_dir = os.path.join(dir_and_subdir, "my_list.txt")
+                output_dir = os.path.join(dir_and_subdir, f"concat_{datetime_tag()}.mkv")
 
-            dict_ = dict(zip([int(''.join((x.split('_')[-2], x.split('_')[-1].replace('.mkv', '')))) for x in vids], [x for x in vids]))
+                dict_ = dict(zip([int(''.join((x.split('_')[-2], x.split('_')[-1].replace('.mkv', '')))) for x in vids], [x for x in vids]))
+                vids_sorted = list(dict(sorted(dict_.items())).values())
+                with open(list_txt_dir, "w") as fp:
+                    for vid in vids_sorted:
+                        vid_str = f"file {vid}\n"
+                        fp.writelines(vid_str)
+
+                ff = ffmpy.FFmpeg(
+                    global_options={"-f concat -safe 0"},
+                    inputs={list_txt_dir: None},
+                    outputs={output_dir: "-c copy"}
+                )
+                ff.run()
+
+                for vid in vids:
+                    vid_dir = os.path.join(dir_and_subdir, vid)
+                    os.remove(vid_dir)
+                os.remove(list_txt_dir)
+
+    elif dir_ == VID_PROC_DIR_NAME:
+        files_raw = os.listdir(dir_)
+        files = [x.split('_')[0] for x in files_raw]
+        duplicate_models = [x for x in files if files.count(x) > 1]
+        list_txt_dir = os.path.join(dir_, "my_list.txt")
+        for model in duplicate_models:
+            vids = [x for x in files_raw if model in x]
+            new_fp = os.path.join(VID_PROC_DIR_NAME, f'{model}_{datetime_tag()}.mp4')
+            dict_ = dict(zip([int(''.join((x.split('_')[-2], x.split('_')[-1].replace('.mp4', '')))) for x in vids], [x for x in vids]))
             vids_sorted = list(dict(sorted(dict_.items())).values())
             with open(list_txt_dir, "w") as fp:
                 for vid in vids_sorted:
                     vid_str = f"file {vid}\n"
                     fp.writelines(vid_str)
-
+            new_fp = os.path.join(VID_PROC_DIR_NAME, f'{model}_{datetime_tag()}.mp4')
             ff = ffmpy.FFmpeg(
                 global_options={"-f concat -safe 0"},
                 inputs={list_txt_dir: None},
-                outputs={output_dir: "-c copy"}
+                outputs={f'{new_fp}': "-c copy"}
             )
             ff.run()
 
             for vid in vids:
-                vid_dir = os.path.join(dir_and_subdir, vid)
+                vid_dir = os.path.join(VID_PROC_DIR_NAME, vid)
                 os.remove(vid_dir)
             os.remove(list_txt_dir)
-            logit(f"video_stitcher concatenated {subdir}")
 
 def process_vids():
 
-    video_stitcher()
+    video_stitcher(VID_DIR_NAME)
+    video_stitcher(VID_PROC_DIR_NAME)
 
     if not os.path.exists(VID_PROC_DIR_NAME):
         os.mkdir(VID_PROC_DIR_NAME)
@@ -212,8 +224,10 @@ def process_vids():
         )
 
         ff.run()
-        os.remove(full_fp)
+        if os.path.exists(full_fp):
+            os.remove(full_fp)
         dir_clean_up()
+        # video_stitcher(VID_PROC_DIR_NAME)
 
 def dir_clean_up():
     models = os.listdir(VID_DIR_NAME)
@@ -226,13 +240,11 @@ def dir_clean_up():
 
 def main():
     while True:
-        for i in range(3):
+        for i in range(random.randint(2, 4)):
             models_online, models = model_list_grabber()
-            logit(f"{len(models_online)} followed models are online")
             models_online_followed = stream_download_decider(models_online)
-            logit(f"{len(models_online_followed)} followed models are online")
-            concurrent_stream_recording(models_online_followed, 60, multiprocessing.cpu_count())
-        video_stitcher()
+            concurrent_stream_recording(models_online_followed, random.randint(120, 300) , multiprocessing.cpu_count())
+        video_stitcher(VID_DIR_NAME)
 
 
 if __name__ == "__main__":
