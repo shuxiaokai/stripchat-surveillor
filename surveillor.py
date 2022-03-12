@@ -142,7 +142,7 @@ def video_stitcher(dir_):
     -directory which is instatiated by m3u8_link_recorder
     """
 
-    if dir_ == VID_DIR_NAME:
+    if dir_ == VID_DIR_NAME or None:
         subdirs = os.listdir(VID_DIR_NAME)
 
 
@@ -175,7 +175,8 @@ def video_stitcher(dir_):
     elif dir_ == VID_PROC_DIR_NAME:
         files_raw = os.listdir(dir_)
         files = [x.split('_')[0] for x in files_raw]
-        duplicate_models = [x for x in files if files.count(x) > 1]
+        duplicate_models = set([x for x in files if files.count(x) > 1])
+        print(duplicate_models)
         list_txt_dir = os.path.join(dir_, "my_list.txt")
         for model in duplicate_models:
             vids = [x for x in files_raw if model in x]
@@ -214,7 +215,7 @@ def process_vids():
         if len(file) > 1:
             pass
         full_fp = os.path.join(fp, file[0])
-        new_file_name = f'{model}_{datetime_tag()}.mp4'
+        new_file_name = f'{model}_-_-{datetime_tag()}.mp4'
         new_fp = os.path.join(VID_PROC_DIR_NAME, new_file_name)
         print(f'processing {model}')
 
@@ -227,7 +228,6 @@ def process_vids():
         if os.path.exists(full_fp):
             os.remove(full_fp)
         dir_clean_up()
-        # video_stitcher(VID_PROC_DIR_NAME)
 
 def dir_clean_up():
     models = os.listdir(VID_DIR_NAME)
