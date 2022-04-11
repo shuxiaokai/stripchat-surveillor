@@ -1,13 +1,10 @@
 models_followed.txt
 vids_preprocessed/
-testing.ipynb
-chromedriver
 .ipynb_checkpoints
-tryout_ffmpy.ipynb
-test.mkv
 env
 strategy.txt
 data_dump
-surveil.log
 data_dump_archive
 analytics.db
+analytics.py
+__pycache__/
