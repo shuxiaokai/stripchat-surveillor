@@ -23,6 +23,3 @@ python3 surveillor.py <model usernames in lower-case, separated by space>
 * For OpSec, while executing surveillor.py it is recommended to use a VPN-connection to a server operated by a privacy-focused VPN-service. Otherwise, there is the risk that the host triangulates you due to the unusually large response being requested to the API.
 * If you want to initiate concatenation of all videos manually, in Linux, execute `python3 -c 'import surveillor; surveillor.video_stitcher()'` from the command line.
 * To concatenate and h264-transcode all videos, on Linux, execute `python3 -c 'import surveillor; surveillor.process_vids()'` from the command line. This is performance-intensive.
-## Analytics
-
-As of the commit-date of this README-file, analytics.py, when executed, generates a sqlite3-db from the data in /data_dump json-files. Generates one table for each model found in the json-files. Only content of the tables is date and time tags for when the model was on-line. Serves as the backbone for future show-schedule-predictor-functionality or other analytics-based functionalities.

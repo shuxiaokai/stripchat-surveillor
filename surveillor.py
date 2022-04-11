@@ -88,7 +88,7 @@ def model_list_saver(model_list):
         json.dump(model_list, fp)
 
 
-def stream_download_decider(all_model_names_480_option: tuple):
+def stream_download_decider(all_model_names_480_option: tuple, wait_secs: int = 300):
     """takes tuple of all models online with odel id, model uname and 480p option. Will 
     decide according to models_followed.txt list rank which four models to record.
     """
@@ -113,8 +113,8 @@ def stream_download_decider(all_model_names_480_option: tuple):
         print(models_followed_online)
         
     elif len(models_followed_online) == 0:
-        print("none of your models are online")
-        sleep(300)
+        print(f"None of your models are online. Waiting {wait_secs * 60} mins to check again.")
+        sleep(wait_secs)
 
     return models_followed_online
 
@@ -241,7 +241,7 @@ def main():
     while True:
         for i in range(random.randint(2, 4)):
             models_online, models = model_list_grabber()
-            models_online_followed = stream_download_decider(models_online)
+            models_online_followed = stream_download_decider(models_online, 300)
             concurrent_stream_recording(models_online_followed, random.randint(120, 300) , multiprocessing.cpu_count())
         video_stitcher(VID_DIR_NAME)
 
