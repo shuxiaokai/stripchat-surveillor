@@ -7,7 +7,6 @@ import sys
 import threading
 from datetime import datetime
 from time import sleep
-import logging
 import multiprocessing
 import random
 
@@ -115,6 +114,7 @@ def stream_download_decider(all_model_names_480_option: tuple):
         
     elif len(models_followed_online) == 0:
         print("none of your models are online")
+        sleep(300)
 
     return models_followed_online
 
