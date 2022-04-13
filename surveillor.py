@@ -68,8 +68,9 @@ def model_list_grabber():
         else:
             resolution_option_480p = True
         uname = str(model.get("username"))
+        m3u8_link = str(model['hlsPlaylist'])
         models_online_resolution_option_480p.append(
-            tuple([id, uname, resolution_option_480p]))
+            tuple([id, uname, resolution_option_480p, m3u8_link]))
 
 
     return models_online_resolution_option_480p, models
@@ -98,17 +99,17 @@ def stream_download_decider(all_model_names_480_option: tuple, wait_secs: int = 
         with open("models_followed.txt", "r") as f:
             for line in set([x for x in f.readlines()]):
                 model_followed = line.replace("\n", "")
-                for id_online, uname_online, option_480p_online in all_model_names_480_option:
+                for id_online, uname_online, option_480p_online, m3u8_link in all_model_names_480_option:
                     if model_followed == uname_online.lower():
                         models_followed_online.append(
-                            tuple([id_online, uname_online, option_480p_online]))
+                            tuple([id_online, uname_online, option_480p_online, m3u8_link]))
     else:
         models_followed = sys.argv[1:]
         for model_followed in models_followed:
-            for id_online, uname_online, option_480p_online in all_model_names_480_option:
+            for id_online, uname_online, option_480p_online, m3u8_link in all_model_names_480_option:
                 if model_followed == uname_online.lower():
                     models_followed_online.append(
-                        tuple([id_online, uname_online, option_480p_online]))
+                        tuple([id_online, uname_online, option_480p_online, m3u8_link]))
     if len(models_followed_online) > 0:
         print(models_followed_online)
         
@@ -126,12 +127,11 @@ def concurrent_stream_recording(models_online_followed: tuple, sleep_time: int, 
     m3u8_links = []
     usernames = [x[1] for x in models_online_followed]
 
-    for id, uname, option_480p in models_online_followed:
+    for id, uname, option_480p, m3u8_link in models_online_followed:
         if option_480p:
-            m3u8_link = f"https://b-hls-01.strpst.com/hls/{id}/{id}_480p.m3u8"
+            m3u8_link.replace('_240p', '_480p')
             m3u8_links.append(m3u8_link)
         elif not option_480p:
-            m3u8_link = f"https://b-hls-01.strpst.com/hls/{id}/{id}.m3u8"
             m3u8_links.append(m3u8_link)
     with concurrent.futures.ProcessPoolExecutor() as executor:
         executor.map(m3u8_link_recorder, m3u8_links[:models_to_record], usernames[:models_to_record], [sleep_time] * models_to_record)
