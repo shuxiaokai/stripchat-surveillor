@@ -1,10 +1,11 @@
 # stripchat-surveillor
 
-The surveillor.py-script records models from [stripchat](https://stripchat.com/) / [xhamsterlive](https://xhamsterlive.com/) continuously by exploiting a publically accessible API of the site and agnostic hls-routing.
+The surveillor.py-script records models from [stripchat](https://stripchat.com/) / [xhamsterlive](https://xhamsterlive.com/) continuously by out-of-rowser-usage of their API.
 
-This script is tested in Ubuntu and with ffmpeg version 4.2.4-1ubuntu0.1. If it functions for other operating systems or ffmpeg binaries is not known.
+This script is tested in Ubuntu and with ffmpeg version 4.2.4-1ubuntu0.1. It seems to also work on Windows 10 if set up correctly. If it works on other platforms is not known.
 
-## Start Up (in Ubuntu):
+## Start Up (Ubuntu):
+Download this repo, then in the directory of the repo:
 
 ```console
 pip install -r requirements.txt

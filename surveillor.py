@@ -31,9 +31,11 @@ def m3u8_link_recorder(m3u8_link: str, model_username: str, sleep_time: int):
     vid_name = f"{datetime_tag()}.mkv"
     vid_path = os.path.join(VID_DIR_NAME, model_username, vid_name)
     ff = ffmpy.FFmpeg(
-        inputs={m3u8_link: None},
-        outputs={vid_path: "-c copy"}
+        inputs={m3u8_link: ""},
+        outputs={vid_path: "-vf \"drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf: text='%{gmtime\:%d/%m/%y %H\\\\\\\\\:%M}': x=w-text_w: y=0: fontcolor=white: fontsize=30\""}
     )
+    print('CMDCMD')
+    print(ff.cmd)
 
     if not os.path.isdir(VID_DIR_NAME):
         os.mkdir(VID_DIR_NAME)
@@ -129,8 +131,7 @@ def concurrent_stream_recording(models_online_followed: tuple, sleep_time: int, 
 
     for id, uname, option_480p, m3u8_link in models_online_followed:
         if option_480p:
-            m3u8_link.replace('_240p', '_480p')
-            m3u8_links.append(m3u8_link)
+            m3u8_links.append(m3u8_link.replace('_240p', '_480p'))
         elif not option_480p:
             m3u8_links.append(m3u8_link)
     with concurrent.futures.ProcessPoolExecutor() as executor:
