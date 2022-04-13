@@ -31,7 +31,7 @@ def m3u8_link_recorder(m3u8_link: str, model_username: str, sleep_time: int):
     vid_name = f"{datetime_tag()}.mkv"
     vid_path = os.path.join(VID_DIR_NAME, model_username, vid_name)
     ff = ffmpy.FFmpeg(
-        inputs={m3u8_link: ""},
+        inputs={m3u8_link: None},
         outputs={vid_path: "-vf \"drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf: text='%{gmtime\:%d/%m/%y %H\\\\\\\\\:%M}': x=w-text_w: y=0: fontcolor=white: fontsize=30\""}
     )
     print('CMDCMD')
