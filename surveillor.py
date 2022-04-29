@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+from cmath import log
 import concurrent.futures
 import json
 import os
@@ -38,8 +39,7 @@ def m3u8_link_recorder(m3u8_link: str, model_username: str, sleep_time: int):
         inputs={m3u8_link: None},
         outputs={vid_path: "-vf \"drawtext=fontfile=Arial.ttf: text='%{gmtime\:%d/%m/%y %H\\\\\\\\\:%M}': x=w-text_w: y=0: fontcolor=white: fontsize=30\""}
     )
-    print('CMDCMD')
-    print(ff.cmd)
+    logging.info('Executing following ffmpeg command: ' + ff.cmd)
 
     if not os.path.isdir(VID_DIR_NAME):
         os.mkdir(VID_DIR_NAME)
@@ -147,14 +147,22 @@ def concurrent_stream_recording(models_online_followed: tuple, sleep_time: int, 
         executor.map(m3u8_link_recorder, m3u8_links[:models_to_record], usernames[:models_to_record], [sleep_time] * models_to_record)
 
 
-def video_stitcher(dir_):
+def video_stitcher(dir_ = VID_DIR_NAME):
     """invoke method for stitching together videos in each subdirectory of "vids_preprocessed"
     -directory which is instatiated by m3u8_link_recorder
     """
 
     if dir_ == VID_DIR_NAME or None:
         subdirs = os.listdir(VID_DIR_NAME)
-
+        logging.info('nog start')
+        log_li = []
+        for subdir in subdirs:
+            dir_and_subdir = os.path.join(VID_DIR_NAME, subdir)
+            if len(os.listdir(dir_and_subdir)) > 1:
+                log_li.append(subdir)
+        log_li.insert(0, 'concatenating videos in following directories/folders:')
+        logging.info(' '.join(log_li))
+        logging.info('neg start')
 
         for subdir in subdirs:
             dir_and_subdir = os.path.join(VID_DIR_NAME, subdir)
@@ -251,10 +259,10 @@ def main():
     fmt = '[%(levelname)s] %(asctime)s - %(message)s'
     logging.basicConfig(level = logging.DEBUG, format = fmt, filename = 'log', filemode = 'a')
     while True:
-        for i in range(random.randint(2, 4)):
+        for i in range(3):
             models_online, models = model_list_grabber()
-            models_online_followed = stream_download_decider(models_online, 300)
-            concurrent_stream_recording(models_online_followed, random.randint(120, 300) , multiprocessing.cpu_count())
+            models_online_followed = stream_download_decider(models_online)
+            concurrent_stream_recording(models_online_followed, 300, multiprocessing.cpu_count())
         video_stitcher(VID_DIR_NAME)
 
 
