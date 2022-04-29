@@ -3,12 +3,15 @@
 import concurrent.futures
 import json
 import os
+from plistlib import FMT_BINARY
+from re import fullmatch
 import sys
 import threading
 from datetime import datetime
 from time import sleep
 import multiprocessing
 import random
+import logging
 
 import ffmpy
 import requests
@@ -17,6 +20,7 @@ import requests
 RAW_DATA_DIR_NAME = 'data_dump'
 VID_DIR_NAME = 'vids_preprocessed'
 VID_PROC_DIR_NAME = 'vids_processed'
+MODELS_FOLLOWED = 'models_followed.txt'
 
 def datetime_tag():
     return datetime.now().strftime("%y%m%d_%H%M%S")
@@ -32,7 +36,7 @@ def m3u8_link_recorder(m3u8_link: str, model_username: str, sleep_time: int):
     vid_path = os.path.join(VID_DIR_NAME, model_username, vid_name)
     ff = ffmpy.FFmpeg(
         inputs={m3u8_link: None},
-        outputs={vid_path: "-vf \"drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf: text='%{gmtime\:%d/%m/%y %H\\\\\\\\\:%M}': x=w-text_w: y=0: fontcolor=white: fontsize=30\""}
+        outputs={vid_path: "-vf \"drawtext=fontfile=Arial.ttf: text='%{gmtime\:%d/%m/%y %H\\\\\\\\\:%M}': x=w-text_w: y=0: fontcolor=white: fontsize=30\""}
     )
     print('CMDCMD')
     print(ff.cmd)
@@ -98,7 +102,8 @@ def stream_download_decider(all_model_names_480_option: tuple, wait_secs: int = 
 
     models_followed_online = []
     if len(sys.argv) == 1:
-        with open("models_followed.txt", "r") as f:
+        logging.info(f'fetching model usernames from {MODELS_FOLLOWED}')
+        with open(MODELS_FOLLOWED, "r") as f:
             for line in set([x for x in f.readlines()]):
                 model_followed = line.replace("\n", "")
                 for id_online, uname_online, option_480p_online, m3u8_link in all_model_names_480_option:
@@ -107,16 +112,20 @@ def stream_download_decider(all_model_names_480_option: tuple, wait_secs: int = 
                             tuple([id_online, uname_online, option_480p_online, m3u8_link]))
     else:
         models_followed = sys.argv[1:]
+        logging.info(f'following models will be checked if online: {" ".join(models_followed)}')
         for model_followed in models_followed:
             for id_online, uname_online, option_480p_online, m3u8_link in all_model_names_480_option:
                 if model_followed == uname_online.lower():
                     models_followed_online.append(
                         tuple([id_online, uname_online, option_480p_online, m3u8_link]))
     if len(models_followed_online) > 0:
-        print(models_followed_online)
+        model_li = [f'\t{x}: {z.replace("_240p", "")}' for w, x, y, z in models_followed_online]
+        model_li.insert(0, 'Those followed models are online:')
+        models_str = '\n'.join(model_li)
+        logging.info(models_str)
         
     elif len(models_followed_online) == 0:
-        print(f"None of your models are online. Waiting {wait_secs * 60} mins to check again.")
+        logging.info(f"None of your models are online. Waiting {wait_secs / 60} mins to check again.")
         sleep(wait_secs)
 
     return models_followed_online
@@ -239,6 +248,8 @@ def dir_clean_up():
 
 
 def main():
+    fmt = '[%(levelname)s] %(asctime)s - %(message)s'
+    logging.basicConfig(level = logging.DEBUG, format = fmt, filename = 'log', filemode = 'a')
     while True:
         for i in range(random.randint(2, 4)):
             models_online, models = model_list_grabber()
